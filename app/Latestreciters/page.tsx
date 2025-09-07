@@ -15,7 +15,7 @@ const reciters = [
   {
     id: 1,
     name: "الشيخ عبد الرحمن السديس",
-    image: "/reciters/sudais.jpg",
+    image: "https://avatar.iran.liara.run/public/33",
     sample: "https://www.youtube.com/watch?v=dummy1",
     district: "حي العزيزية",
     mosque: "https://maps.google.com/?q=Masjid+Sudais",
@@ -23,7 +23,7 @@ const reciters = [
   {
     id: 2,
     name: "الشيخ مشاري العفاسي",
-    image: "/reciters/mishary.jpg",
+    image: "https://avatar.iran.liara.run/public/31",
     sample: "https://soundcloud.com/dummy2",
     district: "حي العليا",
     mosque: "https://maps.google.com/?q=Masjid+Mishary",
@@ -31,7 +31,7 @@ const reciters = [
   {
     id: 3,
     name: "الشيخ سعد الغامدي",
-    image: "/reciters/saad.jpg",
+    image: "https://avatar.iran.liara.run/public/32",
     sample: "https://www.youtube.com/watch?v=dummy3",
     district: "حي الملك فهد",
     mosque: "https://maps.google.com/?q=Masjid+Saad",

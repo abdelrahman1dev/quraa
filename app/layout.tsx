@@ -26,9 +26,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" className={cairo.variable}>
+      
+      <body className="antialiased font-cairo font-semibold bg-beige/5">
       <Nav />
-      <body className="antialiased font-cairo font-semibold bg-beige/5">{children}</body>
+      {children}
       <Footer />
+      </body>
+      
     </html>
   );
 }

@@ -28,7 +28,7 @@ function Nav() {
   }, [isOpen]);
 
   return (
-    <header className="w-full flex justify-center">
+    <div className="w-full flex justify-center">
       <nav className="w-[90%] lg:w-[70%] fixed top-4 z-50 rounded-full glassmorphism flex flex-row-reverse justify-between items-center px-6 py-4 border border-beige/20 shadow-md">
         {/* Logo */}
         <h1 className="text-xl lg:text-2xl text-darkgreen font-bold">
@@ -52,7 +52,7 @@ function Nav() {
             {texts.navbar.readers}
           </li>
           </Link>
-          <Link href="/pages/add-reader">
+          <Link href="/pages/add-readers">
           <li className="flex flex-row-reverse gap-1 items-center cursor-pointer hover:opacity-50 transition">
             {texts.navbar.addReader}
             <CirclePlus className="w-[1.1rem]" />
@@ -91,7 +91,7 @@ function Nav() {
             {texts.navbar.readers}
           </li>
           </Link>
-          <Link href="/pages/add-reader">
+          <Link href="/pages/add-readers">
           <li className="flex flex-row-reverse gap-1 items-center cursor-pointer hover:opacity-50 transition">
             {texts.navbar.addReader}
             <CirclePlus className="w-[1.1rem]" />
@@ -101,7 +101,7 @@ function Nav() {
           </div>
         )}
       </nav>
-    </header>
+    </div>
   );
 }
 
