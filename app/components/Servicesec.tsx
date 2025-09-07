@@ -2,6 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import  Button  from "./ui/Button";
+import Link from "next/link";
 
 function Servicesec() {
   const services = [
@@ -9,16 +10,19 @@ function Servicesec() {
       title: "استمع للتلاوات",
       description: "اكتشف أجمل التلاوات من قراء مدينة الرياض بجودة عالية وسهولة في الوصول.",
       cta: "استمع الآن",
+      link: "/pages/readers",
     },
     {
       title: "أضف قارئ جديد",
       description: "ساهم في المنصة عبر إضافة قارئ من منطقتك مع بيانات المسجد وروابط التلاوة.",
       cta: "أضف قارئ",
+      link: "/pages/add-readers",
     },
     {
       title: "التفاعل والتعليقات",
       description: "شارك آرائك وتعليقاتك مع الزوار الآخرين وكن جزءًا من التجربة.",
       cta: "أضف تعليق",
+      link: "#add-comment",
     },
   ];
 
@@ -47,9 +51,11 @@ function Servicesec() {
               </CardHeader>
               <CardContent className="flex flex-col gap-6 flex-1">
                 <p className="text-gray-600">{service.description}</p>
-                <Button className="bg-mint text-darkgreen hover:bg-darkgreen hover:text-white transition rounded-xl">
+                <Link href={service.link} className="mt-auto">
+                  <Button className="bg-mint text-darkgreen hover:bg-darkgreen hover:text-white transition rounded-xl">
                   {service.cta}
                 </Button>
+                </Link>
               </CardContent>
             </Card>
           ))}

@@ -3,7 +3,7 @@ import React from "react";
 import texts from "@/public/locales/texts.json";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import Button from "./ui/Button";
-import { ArrowDown } from "lucide-react";
+import Link from "next/link";
 
 function HeroSec() {
   return (
@@ -16,8 +16,10 @@ function HeroSec() {
         <p className="text-lg text-gray-700 max-w-xl mx-auto lg:mx-0">
           {texts.home.heroSubtitle}
         </p>
-     
-        <Button text={texts.navbar.readers} />
+
+        <Link href="/pages/readers">
+          <Button text={texts.navbar.readers} />
+        </Link>
       </div>
 
       {/* Animation Side */}
@@ -28,8 +30,8 @@ function HeroSec() {
         </div>
       </div>
       <div className="w-32  absolute bottom-0 left-1/2 transform -translate-x-1/2 lg:right-20 lg:translate-x-0">
-         <DotLottieReact src="/animations/scrolldown.json" loop autoplay />
-        
+        <DotLottieReact src="/animations/scrolldown.json" loop autoplay />
+
       </div>
     </section>
   );

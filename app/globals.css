@@ -140,3 +140,6 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+body{
+  @apply scroll-smooth
+}

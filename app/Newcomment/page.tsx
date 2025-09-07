@@ -17,6 +17,7 @@ function NewComment() {
     <section
       dir="rtl"
       className="max-w-3xl mx-auto px-6 py-12 bg-cream rounded-2xl shadow-md w-full"
+      id="add-comment"
     >
       <h2 className="text-2xl font-bold text-darkgreen mb-6">إضافة تعليق</h2>
 

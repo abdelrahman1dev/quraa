@@ -2,6 +2,7 @@
 import React from "react";
 import texts from "@/public/locales/texts.json";
 import Link from "next/link";
+import { Facebook, Instagram, Twitter } from "lucide-react";
 
 function Footer() {
   return (
@@ -48,9 +49,9 @@ function Footer() {
           <p className="text-sm opacity-80">📧 info@quraa.com</p>
           <p className="text-sm opacity-80">📍 Riyadh, Saudi Arabia</p>
           <div className="flex gap-4 mt-4">
-            <Link href="https://twitter.com" target="_blank" className="hover:opacity-70">🐦</Link>
-            <Link href="https://facebook.com" target="_blank" className="hover:opacity-70">📘</Link>
-            <Link href="https://instagram.com" target="_blank" className="hover:opacity-70">📸</Link>
+            <Link href="https://twitter.com" target="_blank" className="hover:opacity-70"><Twitter /></Link>
+            <Link href="https://facebook.com" target="_blank" className="hover:opacity-70"><Facebook /></Link>
+            <Link href="https://instagram.com" target="_blank" className="hover:opacity-70"><Instagram /></Link>
           </div>
         </div>
       </div>
