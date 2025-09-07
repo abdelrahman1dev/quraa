@@ -28,7 +28,7 @@ function HeroSec() {
         </div>
       </div>
       <div className="w-32  absolute bottom-0 left-1/2 transform -translate-x-1/2 lg:right-20 lg:translate-x-0">
-         <DotLottieReact src="/animations/scroll down.json" loop autoplay />
+         <DotLottieReact src="/animations/scrolldown.json" loop autoplay />
         
       </div>
     </section>
