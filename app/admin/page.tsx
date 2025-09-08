@@ -127,7 +127,8 @@ export default function AdminDashboard() {
         totalReciters: totalReciters || 0,
         totalFavorites: totalFavorites || 0,
         recentReciters: recentReciters || 0,
-       mostFavorited: mostFavoritedReciter?.readers?.[0]?.name || "لا يوجد",
+        mostFavorited: mostFavoritedReciter?.readers?.map(r => r.name).join(", ") || "لا يوجد",
+
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
