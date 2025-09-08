@@ -11,10 +11,20 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "../lib/supabaseClient"; // your Supabase client
 
+interface Reciter {
+  id: number;
+  name: string;
+  image?: string;
+  district: string;
+  sample: string;
+  mosque: string;
+  created_at: string;
+}
+
 function Latestreciters() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [reciters, setReciters] = useState<any[]>([]);
-  const [selectedReciter, setSelectedReciter] = useState<any | null>(null);
+  const [reciters, setReciters] = useState<Reciter[]>([]);
+  const [selectedReciter, setSelectedReciter] = useState<Reciter | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch latest 3 readers from Supabase

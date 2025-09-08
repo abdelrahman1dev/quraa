@@ -52,7 +52,7 @@ function Servicesec() {
               <CardContent className="flex flex-col gap-6 flex-1">
                 <p className="text-gray-600">{service.description}</p>
                 <Link href={service.link} className="mt-auto">
-                  <Button className="bg-mint text-darkgreen hover:bg-darkgreen hover:text-white transition rounded-xl">
+                  <Button >
                   {service.cta}
                 </Button>
                 </Link>

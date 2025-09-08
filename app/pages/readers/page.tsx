@@ -13,8 +13,18 @@ import { supabase } from "../../lib/supabaseClient"; // your supabase client
 
 const ITEMS_PER_PAGE = 6;
 
+interface Reciter {
+  id: number;
+  name: string;
+  image?: string;
+  district: string;
+  sample_link: string;
+  mosque_link: string;
+  created_at: string;
+}
+
 function RecitersSection() {
-  const [readers, setReaders] = useState<any[]>([]);
+  const [readers, setReaders] = useState<Reciter[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
 

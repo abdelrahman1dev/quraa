@@ -18,25 +18,7 @@ const ReciterSchema = Yup.object().shape({
     .required("رابط المسجد مطلوب"),
 });
 
-async function AddReciterForm() {
-
-  const {data , error} = await supabase.from('requests').insert(
-    [
-      {
-        name: "test",
-        sample_link: "https://youtube.com",
-        district: "test",
-        mosque_link: "https://maps.google.com",
-      },
-    ]
-  );
-
-  if (error) {
-    console.error("Error inserting request:", error.message);
-  } else {
-    console.log("Request inserted successfully:", data);
-  } 
-
+function AddReciterForm() {
   return (
     <section className="w-full max-w-lg mx-auto py-12 mt-20 px-6 bg-white rounded-2xl shadow">
       <h2 className="text-2xl font-bold text-center mb-6">
@@ -51,10 +33,24 @@ async function AddReciterForm() {
           mosque: "",
         }}
         validationSchema={ReciterSchema}
-        onSubmit={(values, { resetForm }) => {
-          console.log("📩 Form Submitted:", values);
-          alert("تم إرسال الطلب بنجاح ✅");
-          resetForm();
+        onSubmit={async (values, { resetForm }) => {
+          const { data, error } = await supabase.from('requests').insert([
+            {
+              name: values.name,
+              sample_link: values.sample,
+              district: values.district,
+              mosque_link: values.mosque,
+            },
+          ]);
+
+          if (error) {
+            console.error("Error inserting request:", error.message);
+            alert("حدث خطأ أثناء إرسال الطلب. حاول مرة أخرى.");
+          } else {
+            console.log("Request inserted successfully:", data);
+            alert("تم إرسال الطلب بنجاح ✅");
+            resetForm();
+          }
         }}
       >
         {({ isSubmitting }) => (
@@ -139,5 +135,5 @@ async function AddReciterForm() {
     </section>
   );
 }
-AddReciterForm();
+
 export default AddReciterForm;
