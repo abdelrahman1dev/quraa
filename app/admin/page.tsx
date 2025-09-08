@@ -1,4 +1,4 @@
- "use client";
+"use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -100,11 +100,20 @@ export default function AdminDashboard() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
+  // ==================== FETCH STATS ====================
   const fetchStats = useCallback(async () => {
     try {
-      const { count: totalReciters } = await supabase.from("readers").select("*", { count: "exact", head: true });
-      const { count: totalFavorites } = await supabase.from("favorites").select("*", { count: "exact", head: true });
+      // Total reciters
+      const { count: totalReciters } = await supabase
+        .from("readers")
+        .select("*", { count: "exact", head: true });
 
+      // Total favorites
+      const { count: totalFavorites } = await supabase
+        .from("favorites")
+        .select("*", { count: "exact", head: true });
+
+      // Recent reciters (last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const { count: recentReciters } = await supabase
@@ -112,22 +121,40 @@ export default function AdminDashboard() {
         .select("*", { count: "exact", head: true })
         .gte("created_at", thirtyDaysAgo.toISOString());
 
-      const { data: favoritedReciters } = await supabase.from("favorites").select(`reader_id, readers:reader_id(name)`);
-      
+      // Fetch favorites with reciter info
+      const { data: favoritedReciters } = await supabase
+        .from("favorites")
+        .select(`reader_id, readers:reader_id(name)`);
 
-      const favoriteCounts: Record<string, number> = favoritedReciters?.reduce((acc: Record<string, number>, fav: FavoritedReciter) => {
-        acc[fav.reader_id.toString()] = (acc[fav.reader_id.toString()] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
+      // Build a map: reciter_id => favorite count
+      const favoriteCounts: Record<number, number> = {};
+      favoritedReciters?.forEach((fav: FavoritedReciter) => {
+        const rid = fav.reader_id;
+        favoriteCounts[rid] = (favoriteCounts[rid] || 0) + 1;
+      });
 
-      const mostFavoritedId = Object.keys(favoriteCounts || {}).reduce((a, b) => (favoriteCounts[a] > favoriteCounts[b] ? a : b), "0");
-      const mostFavoritedReciter = favoritedReciters?.find((fav: FavoritedReciter) => fav.reader_id.toString() === mostFavoritedId);
+      // Find reciter ID with most favorites
+      let mostFavoritedId: number | null = null;
+      let maxCount = 0;
+      for (const [idStr, count] of Object.entries(favoriteCounts)) {
+        if (count > maxCount) {
+          maxCount = count;
+          mostFavoritedId = Number(idStr);
+        }
+      }
+
+      // Get the name of the most favorited reciter
+      const mostFavoritedReciter = favoritedReciters?.find(
+        (fav) => fav.reader_id === mostFavoritedId
+      );
+      const mostFavoritedName =
+        mostFavoritedReciter?.readers?.[0]?.name || "لا يوجد";
 
       setStats({
         totalReciters: totalReciters || 0,
         totalFavorites: totalFavorites || 0,
         recentReciters: recentReciters || 0,
-       mostFavorited: mostFavoritedReciter?.readers?.[0]?.name || "لا يوجد",
+        mostFavorited: mostFavoritedName,
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -135,10 +162,14 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  // ==================== FETCH RECITERS ====================
   const fetchReciters = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from("readers").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("readers")
+        .select("*")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       setReciters((data as unknown as Reciter[]) || []);
     } catch (error) {
@@ -154,9 +185,12 @@ export default function AdminDashboard() {
     fetchStats();
   }, [fetchReciters, fetchStats]);
 
+  // ==================== HANDLE ADD ====================
   const handleAddReciter = async (values: FormValues, actions: FormActions) => {
     try {
-      const { error } = await supabase.from("readers").insert([{ ...values, image: values.image || null }]);
+      const { error } = await supabase
+        .from("readers")
+        .insert([{ ...values, image: values.image || null }]);
       if (error) throw error;
       toast.success("تم إضافة القارئ بنجاح");
       actions.resetForm();
@@ -171,10 +205,14 @@ export default function AdminDashboard() {
     }
   };
 
+  // ==================== HANDLE UPDATE ====================
   const handleUpdateReciter = async (values: FormValues, actions: FormActions) => {
     if (!editingReciter) return;
     try {
-      const { error } = await supabase.from("readers").update({ ...values, image: values.image || null }).eq("id", editingReciter.id);
+      const { error } = await supabase
+        .from("readers")
+        .update({ ...values, image: values.image || null })
+        .eq("id", editingReciter.id);
       if (error) throw error;
       toast.success("تم تحديث القارئ بنجاح");
       setIsEditDialogOpen(false);
@@ -189,13 +227,14 @@ export default function AdminDashboard() {
     }
   };
 
+  // ==================== HANDLE DELETE ====================
   const handleDeleteReciter = async (id: number) => {
     if (!window.confirm("هل أنت متأكد من حذف هذا القارئ؟")) return;
     try {
       const { error } = await supabase.from("readers").delete().eq("id", id);
       if (error) throw error;
       toast.success("تم حذف القارئ بنجاح");
-      setReciters(reciters.filter(r => r.id !== id));
+      setReciters(reciters.filter((r) => r.id !== id));
       fetchStats();
     } catch (error) {
       console.error("Error deleting reciter:", error);
@@ -204,10 +243,19 @@ export default function AdminDashboard() {
   };
 
   const filteredReciters = reciters.filter(
-    r => r.name.toLowerCase().includes(searchTerm.toLowerCase()) || r.district.toLowerCase().includes(searchTerm.toLowerCase())
+    (r) =>
+      r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.district.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const ReciterForm = ({ reciter, onSubmit }: { reciter?: Reciter; onSubmit: (values: FormValues, actions: FormActions) => Promise<void> }) => (
+  // ==================== FORM COMPONENT ====================
+  const ReciterForm = ({
+    reciter,
+    onSubmit,
+  }: {
+    reciter?: Reciter;
+    onSubmit: (values: FormValues, actions: FormActions) => Promise<void>;
+  }) => (
     <Formik
       initialValues={reciter ? { ...reciter, image: reciter.image || "" } : initialValues}
       validationSchema={ReciterSchema}
@@ -270,6 +318,7 @@ export default function AdminDashboard() {
     </Formik>
   );
 
+  // ==================== RENDER ====================
   return (
     <div className="min-h-screen bg-background p-6" dir="rtl">
       <div className="max-w-7xl mx-auto">
@@ -373,10 +422,21 @@ export default function AdminDashboard() {
                           <TableCell>{new Date(reciter.created_at).toLocaleDateString("ar-SA")}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              <Button size="sm" variant="outline" onClick={() => { setEditingReciter(reciter); setIsEditDialogOpen(true); }}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingReciter(reciter);
+                                  setIsEditDialogOpen(true);
+                                }}
+                              >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button size="sm" variant="destructive" onClick={() => handleDeleteReciter(reciter.id)}>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteReciter(reciter.id)}
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>

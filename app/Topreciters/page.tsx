@@ -225,18 +225,6 @@ function TopReciters() {
                   </div>
                 )}
 
-                <Image
-                  src={
-                    reciter.image ||
-                    `https://avatar.iran.liara.run/public/${reciter.id + 20}`
-                  }
-                  alt={`صورة القارئ ${reciter.name}`}
-                  width={200}
-                  height={200}
-                  className="rounded-full mx-auto object-cover ring-2 ring-border"
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R7Dh5zVlaHWR7kt9EUEDiKzDZD8xSGHxN2rji7J85nF2nDCJHLuBWO59pNJXj2xG23"
-                />
                 <h3 className="mt-4 font-bold text-lg">{reciter.name}</h3>
                 <p className="text-muted-foreground">{reciter.district}</p>
               </div>
@@ -301,18 +289,6 @@ function TopReciters() {
                   </div>
                 )}
 
-                <Image
-                  src={
-                    reciter.image ||
-                    `https://avatar.iran.liara.run/public/${reciter.id + 20}`
-                  }
-                  alt={`صورة القارئ ${reciter.name}`}
-                  width={150}
-                  height={150}
-                  className="rounded-full mx-auto object-cover ring-2 ring-border"
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R7Dh5zVlaHWR7kt9EUEDiKzDZD8xSGHxN2rji7J85nF2nDCJHLuBWO59pNJXj2xG23"
-                />
                 <h3 className="mt-4 font-bold text-lg">{reciter.name}</h3>
                 <p className="text-muted-foreground">{reciter.district}</p>
               </div>

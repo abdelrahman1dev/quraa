@@ -26,8 +26,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" className={cairo.variable}>
-      <Toaster />
+      
       <body className="antialiased font-cairo font-semibold bg-beige/5">
+      <Toaster />
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
