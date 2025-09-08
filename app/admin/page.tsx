@@ -50,6 +50,13 @@ interface DashboardStats {
   mostFavorited: string;
 }
 
+interface FavoritedReciter {
+  reader_id: number;
+  readers: {
+    name: string;
+  }[];
+}
+
 type FormValues = {
   name: string;
   district: string;
@@ -107,13 +114,13 @@ export default function AdminDashboard() {
 
       const { data: favoritedReciters } = await supabase.from("favorites").select(`reader_id, readers:reader_id(name)`);
 
-      const favoriteCounts = favoritedReciters?.reduce((acc: any, fav: any) => {
-        acc[fav.reader_id] = (acc[fav.reader_id] || 0) + 1;
+      const favoriteCounts: Record<string, number> = favoritedReciters?.reduce((acc: Record<string, number>, fav: FavoritedReciter) => {
+        acc[fav.reader_id.toString()] = (acc[fav.reader_id.toString()] || 0) + 1;
         return acc;
-      }, {});
+      }, {} as Record<string, number>) || {};
 
       const mostFavoritedId = Object.keys(favoriteCounts || {}).reduce((a, b) => (favoriteCounts[a] > favoriteCounts[b] ? a : b), "0");
-      const mostFavoritedReciter = favoritedReciters?.find((fav: any) => fav.reader_id.toString() === mostFavoritedId);
+      const mostFavoritedReciter = favoritedReciters?.find((fav: FavoritedReciter) => fav.reader_id.toString() === mostFavoritedId);
 
       setStats({
         totalReciters: totalReciters || 0,
