@@ -4,6 +4,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/app/lib/supabaseClient";
 
 // ✅ Validation schema with Yup
 const ReciterSchema = Yup.object().shape({
@@ -17,7 +18,25 @@ const ReciterSchema = Yup.object().shape({
     .required("رابط المسجد مطلوب"),
 });
 
-function AddReciterForm() {
+async function AddReciterForm() {
+
+  const {data , error} = await supabase.from('requests').insert(
+    [
+      {
+        name: "test",
+        sample_link: "https://youtube.com",
+        district: "test",
+        mosque_link: "https://maps.google.com",
+      },
+    ]
+  );
+
+  if (error) {
+    console.error("Error inserting request:", error.message);
+  } else {
+    console.log("Request inserted successfully:", data);
+  } 
+
   return (
     <section className="w-full max-w-lg mx-auto py-12 mt-20 px-6 bg-white rounded-2xl shadow">
       <h2 className="text-2xl font-bold text-center mb-6">
@@ -120,5 +139,5 @@ function AddReciterForm() {
     </section>
   );
 }
-
+AddReciterForm();
 export default AddReciterForm;

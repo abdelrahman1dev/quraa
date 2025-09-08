@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,25 +9,39 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-// Dummy reciters data
-const reciters = Array.from({ length: 15 }, (_, i) => ({
-  id: i + 1,
-  name: `القارئ ${i + 1}`,
-  district: `حي ${i + 1}`,
-  mosque: `مسجد ${i + 1}`,
-  sample: `https://www.youtube.com/watch?v=demo${i + 1}`,
-  image: `https://avatar.iran.liara.run/public/${i + 30}`,
-}));
+import { supabase } from "../../lib/supabaseClient"; // your supabase client
 
 const ITEMS_PER_PAGE = 6;
 
 function RecitersSection() {
+  const [readers, setReaders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
 
-  const totalPages = Math.ceil(reciters.length / ITEMS_PER_PAGE);
+  // Fetch readers from Supabase
+  useEffect(() => {
+    const fetchReaders = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("readers")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error("Error fetching readers:", error.message);
+      } else {
+        setReaders(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchReaders();
+  }, []);
+
+  const totalPages = Math.ceil(readers.length / ITEMS_PER_PAGE);
   const startIdx = (page - 1) * ITEMS_PER_PAGE;
-  const currentItems = reciters.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+  const currentItems = readers.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+
+  if (loading) return <p className="text-center mt-10">جاري التحميل...</p>;
 
   return (
     <section className="w-full py-35 px-6">
@@ -40,7 +54,7 @@ function RecitersSection() {
             <DialogTrigger asChild>
               <div className="bg-white shadow-md rounded-2xl p-4 text-center hover:shadow-lg transition cursor-pointer">
                 <Image
-                  src={reciter.image}
+                  src={reciter.image || `https://avatar.iran.liara.run/public/${reciter.id + 20}`} // fallback image
                   alt={reciter.name}
                   width={120}
                   height={120}
@@ -59,12 +73,12 @@ function RecitersSection() {
                   <strong>الحي:</strong> {reciter.district}
                 </p>
                 <p>
-                  <strong>المسجد:</strong> {reciter.mosque}
+                  <strong>المسجد:</strong> {reciter.mosque_link}
                 </p>
                 <p>
                   <strong>نموذج التلاوة:</strong>{" "}
                   <a
-                    href={reciter.sample}
+                    href={reciter.sample_link}
                     target="_blank"
                     className="text-mint underline"
                   >

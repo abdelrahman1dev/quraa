@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
@@ -9,38 +9,34 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-// Dummy Arabic data
-const reciters = [
-  {
-    id: 1,
-    name: "الشيخ عبد الرحمن السديس",
-    image: "https://avatar.iran.liara.run/public/33",
-    sample: "https://www.youtube.com/watch?v=dummy1",
-    district: "حي العزيزية",
-    mosque: "https://maps.google.com/?q=Masjid+Sudais",
-  },
-  {
-    id: 2,
-    name: "الشيخ مشاري العفاسي",
-    image: "https://avatar.iran.liara.run/public/31",
-    sample: "https://soundcloud.com/dummy2",
-    district: "حي العليا",
-    mosque: "https://maps.google.com/?q=Masjid+Mishary",
-  },
-  {
-    id: 3,
-    name: "الشيخ سعد الغامدي",
-    image: "https://avatar.iran.liara.run/public/32",
-    sample: "https://www.youtube.com/watch?v=dummy3",
-    district: "حي الملك فهد",
-    mosque: "https://maps.google.com/?q=Masjid+Saad",
-  },
-];
+import { supabase } from "../lib/supabaseClient"; // your Supabase client
 
 function Latestreciters() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [selectedReciter, setSelectedReciter] = useState<typeof reciters[0] | null>(null);
+  const [reciters, setReciters] = useState<any[]>([]);
+  const [selectedReciter, setSelectedReciter] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch latest 3 readers from Supabase
+  useEffect(() => {
+    const fetchLatestReciters = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("readers")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      if (error) {
+        console.error("Error fetching latest reciters:", error.message);
+      } else {
+        setReciters(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchLatestReciters();
+  }, []);
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -51,12 +47,14 @@ function Latestreciters() {
     }
   };
 
+  if (loading) return <p className="text-center mt-10">جاري التحميل...</p>;
+
   return (
     <section dir="rtl" className="relative max-w-7xl mx-auto px-6 py-12">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-darkgreen">أحدث القراء</h2>
 
-        {/* Navigation Arrows (Top Right) */}
+        {/* Navigation Arrows */}
         <div className="flex gap-2">
           <button
             onClick={() => scroll("right")}
@@ -74,10 +72,7 @@ function Latestreciters() {
       </div>
 
       {/* Reciters List */}
-      <div
-        ref={scrollRef}
-        className="flex gap-6  scroll-smooth"
-      >
+      <div ref={scrollRef} className="flex gap-6 scroll-smooth">
         {reciters.map((reciter) => (
           <Dialog key={reciter.id}>
             <DialogTrigger asChild>
@@ -87,7 +82,10 @@ function Latestreciters() {
               >
                 <div className="w-32 h-32 mx-auto relative rounded-full overflow-hidden border-4 border-mint">
                   <Image
-                    src={reciter.image}
+                    src={
+                      reciter.image ||
+                      `https://avatar.iran.liara.run/public/${reciter.id + 30}`
+                    }
                     alt={reciter.name}
                     fill
                     className="object-cover"

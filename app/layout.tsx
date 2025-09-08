@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Cairo } from "next/font/google";
-import Nav from "./components/nav";
-import Footer from "./components/footer";
+import ClientLayout from "./components/ClientLayout";
 
 export const metadata: Metadata = {
   title: "منصه قراء القران الكريم",
@@ -26,13 +25,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" className={cairo.variable}>
-      
       <body className="antialiased font-cairo font-semibold bg-beige/5">
-      <Nav />
-      {children}
-      <Footer />
+        <ClientLayout>{children}</ClientLayout>
       </body>
-      
     </html>
   );
 }
