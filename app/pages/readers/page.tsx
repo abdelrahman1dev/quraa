@@ -109,7 +109,11 @@ export default function ReadersSection() {
   const toggleFavorite = useCallback(
     async (readerId: number) => {
       if (!userId) {
-        toast.error?.("يجب تسجيل الدخول") || alert("يجب تسجيل الدخول");
+        if (toast.error) {
+          toast.error("يجب تسجيل الدخول");
+        } else {
+          alert("يجب تسجيل الدخول");
+        }
         return;
       }
 
@@ -126,7 +130,9 @@ export default function ReadersSection() {
           
           if (error) throw error;
           newSet.delete(readerId);
-          toast?.success?.("تم إزالة القارئ من المفضلة");
+          if (toast.success) {
+            toast.success("تم إزالة القارئ من المفضلة");
+          }
         } else {
           const { error } = await supabase
             .from("favorites")
@@ -134,13 +140,18 @@ export default function ReadersSection() {
           
           if (error) throw error;
           newSet.add(readerId);
-          toast?.success?.("تم إضافة القارئ إلى المفضلة");
+          if (toast.success) {
+            toast.success("تم إضافة القارئ إلى المفضلة");
+          }
         }
         setFavorites(newSet);
       } catch (err) {
         console.error("Error toggling favorite:", err);
-        toast.error?.("حدث خطأ أثناء تحديث المفضلة") ||
+        if (toast.error) {
+          toast.error("حدث خطأ أثناء تحديث المفضلة");
+        } else {
           alert("حدث خطأ أثناء تحديث المفضلة");
+        }
       }
     },
     [favorites, userId]

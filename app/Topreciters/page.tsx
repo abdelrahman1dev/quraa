@@ -27,7 +27,7 @@ interface FavoriteWithReciter {
     sample_link: string;
     mosque_link: string;
     created_at: string;
-  };
+  }[];
 }
 
 enum LoadingState {
@@ -93,7 +93,7 @@ function TopReciters() {
           
           if (!recitersMap[readerId]) {
             recitersMap[readerId] = {
-              ...favorite.readers,
+              ...favorite.readers[0],
               favorite_count: 0
             };
           }
