@@ -5,6 +5,7 @@ import * as Yup from "yup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/app/lib/supabaseClient";
+import { toast } from "sonner";
 
 // ✅ Validation schema with Yup
 const ReciterSchema = Yup.object().shape({
@@ -45,10 +46,10 @@ function AddReciterForm() {
 
           if (error) {
             console.error("Error inserting request:", error.message);
-            alert("حدث خطأ أثناء إرسال الطلب. حاول مرة أخرى.");
+            toast.error("حدث خطأ أثناء إرسال الطلب. حاول مرة أخرى.");
           } else {
             console.log("Request inserted successfully:", data);
-            alert("تم إرسال الطلب بنجاح ✅");
+            toast.success("تم إرسال الطلب بنجاح!");
             resetForm();
           }
         }}

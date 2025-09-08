@@ -19,7 +19,6 @@ export default function Sidebar() {
 
   const navItems = [
     { name: "Dashboard", href: "/admin", icon: Home },
-    { name: "Comments", href: "/admin/comments", icon: MessageSquare },
     { name: "Requests", href: "/admin/requests", icon: FilePlus2 },
   ];
 

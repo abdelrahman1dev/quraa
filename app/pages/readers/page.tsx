@@ -1,7 +1,8 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { Heart, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { supabase } from "../../lib/supabaseClient";
-import { Heart } from "lucide-react"; // icon for favorite
+import { toast } from "sonner";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -24,199 +25,323 @@ interface Reader {
   created_at: string;
 }
 
-function ReadersSection() {
+enum LoadingState {
+  IDLE = "idle",
+  LOADING = "loading",
+  ERROR = "error",
+}
+
+export default function ReadersSection() {
   const [readers, setReaders] = useState<Reader[]>([]);
-  const [favorites, setFavorites] = useState<number[]>([]); // reader IDs user favorited
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [loadingState, setLoadingState] = useState<LoadingState>(
+    LoadingState.LOADING
+  );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // ✅ Get logged in user
+  // Initialize auth and load user favorites
   useEffect(() => {
-    const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data.user) setUserId(data.user.id);
+    let mounted = true;
+
+    const initialize = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (mounted) setUserId(session?.user?.id || null);
+      } catch (error) {
+        console.error("Error fetching session:", error);
+      }
     };
-    getUser();
+
+    initialize();
+
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (mounted) setUserId(session?.user?.id || null);
+      }
+    );
+
+    return () => {
+      mounted = false;
+      subscription?.subscription?.unsubscribe();
+    };
   }, []);
 
-  // ✅ Fetch readers
-  useEffect(() => {
-    const fetchReaders = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
+  // Fetch readers and favorites
+  const loadData = useCallback(async () => {
+    setLoadingState(LoadingState.LOADING);
+    try {
+      const { data: readersData, error: readersError } = await supabase
         .from("readers")
         .select("*")
         .order("created_at", { ascending: false });
+      
+      if (readersError) throw readersError;
+      setReaders(readersData || []);
 
-      if (error) {
-        console.error("Error fetching readers:", error.message);
+      if (userId) {
+        const { data: favData, error: favError } = await supabase
+          .from("favorites")
+          .select("reader_id")
+          .eq("user_id", userId);
+        
+        if (favError) throw favError;
+        setFavorites(new Set(favData?.map((f) => f.reader_id) || []));
       } else {
-        setReaders(data || []);
+        setFavorites(new Set());
       }
-      setLoading(false);
-    };
 
-    fetchReaders();
-  }, []);
-
-  // ✅ Fetch favorites of current user
-  useEffect(() => {
-    if (!userId) return;
-
-    const fetchFavorites = async () => {
-      const { data, error } = await supabase
-        .from("favorites")
-        .select("reader_id")
-        .eq("user_id", userId);
-
-      if (error) {
-        console.error("Error fetching favorites:", error.message);
-      } else {
-        setFavorites(data.map((f) => f.reader_id));
-      }
-    };
-
-    fetchFavorites();
+      setLoadingState(LoadingState.IDLE);
+      setCurrentPage(1);
+    } catch (err) {
+      console.error("Error loading data:", err);
+      setLoadingState(LoadingState.ERROR);
+    }
   }, [userId]);
 
-  // ✅ Toggle favorite
-  const toggleFavorite = async (readerId: number) => {
-    if (!userId) {
-      alert("يجب تسجيل الدخول لإضافة المفضلة ⭐");
-      return;
-    }
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-    const isFavorited = favorites.includes(readerId);
-
-    if (isFavorited) {
-      // remove favorite
-      const { error } = await supabase
-        .from("favorites")
-        .delete()
-        .eq("user_id", userId)
-        .eq("reader_id", readerId);
-
-      if (!error) {
-        setFavorites((prev) => prev.filter((id) => id !== readerId));
+  const toggleFavorite = useCallback(
+    async (readerId: number) => {
+      if (!userId) {
+        toast?.error?.("يجب تسجيل الدخول") || alert("يجب تسجيل الدخول");
+        return;
       }
-    } else {
-      // add favorite
-      const { error } = await supabase
-        .from("favorites")
-        .insert([{ user_id: userId, reader_id: readerId }]);
 
-      if (!error) {
-        setFavorites((prev) => [...prev, readerId]);
+      const isFav = favorites.has(readerId);
+      const newSet = new Set(favorites);
+
+      try {
+        if (isFav) {
+          const { error } = await supabase
+            .from("favorites")
+            .delete()
+            .eq("user_id", userId)
+            .eq("reader_id", readerId);
+          
+          if (error) throw error;
+          newSet.delete(readerId);
+          toast?.success?.("تم إزالة القارئ من المفضلة");
+        } else {
+          const { error } = await supabase
+            .from("favorites")
+            .insert([{ user_id: userId, reader_id: readerId }]);
+          
+          if (error) throw error;
+          newSet.add(readerId);
+          toast?.success?.("تم إضافة القارئ إلى المفضلة");
+        }
+        setFavorites(newSet);
+      } catch (err) {
+        console.error("Error toggling favorite:", err);
+        toast?.error?.("حدث خطأ أثناء تحديث المفضلة") ||
+          alert("حدث خطأ أثناء تحديث المفضلة");
       }
-    }
-  };
+    },
+    [favorites, userId]
+  );
 
-  const totalPages = Math.ceil(readers.length / ITEMS_PER_PAGE);
-  const startIdx = (page - 1) * ITEMS_PER_PAGE;
-  const currentItems = readers.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+  const toggleFavoritesView = useCallback(() => {
+    setShowFavoritesOnly((prev) => !prev);
+    setCurrentPage(1);
+  }, []);
 
-  if (loading) return <p className="text-center mt-40">جاري التحميل...</p>;
+  const filteredReaders = useMemo(
+    () =>
+      showFavoritesOnly
+        ? readers.filter((reader) => favorites.has(reader.id))
+        : readers,
+    [readers, favorites, showFavoritesOnly]
+  );
+
+  const totalPages = Math.ceil(filteredReaders.length / ITEMS_PER_PAGE);
+  const currentItems = filteredReaders.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const goToPreviousPage = useCallback(() => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  }, []);
+
+  const goToNextPage = useCallback(() => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+  }, [totalPages]);
+
+  // Loading state
+  if (loadingState === LoadingState.LOADING) {
+    return (
+      <section className="flex justify-center items-center min-h-[400px] py-20">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-muted-foreground">جاري تحميل القراء...</p>
+        </div>
+      </section>
+    );
+  }
+
+  // Error state
+  if (loadingState === LoadingState.ERROR) {
+    return (
+      <section className="flex flex-col justify-center items-center min-h-[400px] py-20">
+        <p className="text-destructive mb-4">حدث خطأ أثناء تحميل البيانات</p>
+        <Button onClick={loadData}>إعادة المحاولة</Button>
+      </section>
+    );
+  }
+
+  // Empty favorites state
+  if (showFavoritesOnly && favorites.size === 0) {
+    return (
+      <section className="flex flex-col justify-center items-center min-h-[400px] py-20">
+        <Heart className="h-16 w-16 text-muted-foreground mb-4" />
+        <p className="text-lg font-medium mb-2">لا توجد مفضلة</p>
+        <p className="text-muted-foreground mb-4">
+          لم تقم بإضافة أي قراء إلى المفضلة بعد
+        </p>
+        <Button onClick={toggleFavoritesView}>عرض جميع القراء</Button>
+      </section>
+    );
+  }
+
+  // No readers state
+  if (readers.length === 0) {
+    return (
+      <section className="flex flex-col justify-center items-center min-h-[400px] py-20">
+        <p className="text-lg font-medium mb-2">لا يوجد قراء</p>
+        <Button onClick={loadData} variant="outline">إعادة تحديث</Button>
+      </section>
+    );
+  }
 
   return (
-    <section className="w-full py-35 px-6">
-      <h2 className="text-2xl font-bold text-right mb-6">قائمة القراء</h2>
+    <section className="w-full mt-30 py-10 px-6">
+      <div className="flex flex-row-reverse justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-right">
+          قائمة القراء
+          {showFavoritesOnly && (
+            <span className="text-lg font-normal text-muted-foreground mr-2">
+              ({favorites.size} مفضل)
+            </span>
+          )}
+        </h2>
+        <Button
+          onClick={toggleFavoritesView}
+          variant={showFavoritesOnly ? "default" : "outline"}
+          disabled={favorites.size === 0 && !showFavoritesOnly}
+        >
+          {showFavoritesOnly ? "عرض الكل" : `عرض المفضلة (${favorites.size})`}
+        </Button>
+      </div>
 
-      {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {currentItems.map((reader) => (
           <Dialog key={reader.id}>
             <DialogTrigger asChild>
-              <div className="bg-white shadow-md rounded-2xl p-4 text-center hover:shadow-lg transition cursor-pointer relative">
+              <div className="relative bg-card shadow-sm rounded-2xl p-6 text-center hover:shadow-md cursor-pointer border group transition-all duration-200">
+                {/* Heart button */}
+                <button
+                  className="absolute top-3 right-3 p-2 rounded-full hover:bg-muted transition-colors z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(reader.id);
+                  }}
+                  aria-label={
+                    favorites.has(reader.id)
+                      ? "إزالة من المفضلة"
+                      : "إضافة إلى المفضلة"
+                  }
+                >
+                  <Heart
+                    className="h-5 w-5 transition-colors"
+                    fill={favorites.has(reader.id) ? "#FF0000" : "none"}
+                    color={favorites.has(reader.id) ? "#FF0000" : "#FF0000" }
+                  />
+                </button>
+
                 <Image
                   src={
                     reader.image ||
                     `https://avatar.iran.liara.run/public/${reader.id + 20}`
                   }
-                  alt={reader.name}
+                  alt={`صورة القارئ ${reader.name}`}
                   width={120}
                   height={120}
-                  className="rounded-full mx-auto"
+                  className="rounded-full mx-auto object-cover ring-2 ring-border group-hover:ring-primary transition-colors"
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R7Dh5zVlaHWR7kt9EUEDiKzDZD8xSGHxN2rji7J85nF2nDCJHLuBWO59pNJXj2xG23"
                 />
-                <h3 className="mt-4 font-bold text-lg">{reader.name}</h3>
-                <p className="text-gray-600">{reader.district}</p>
-
-                {/* ⭐ Favorite button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation(); // prevent dialog opening
-                    toggleFavorite(reader.id);
-                  }}
-                  className="absolute top-3 right-3"
-                >
-                  <Heart
-                    className={`w-6 h-6 ${
-                      favorites.includes(reader.id)
-                        ? "fill-red-500 text-red-500"
-                        : "text-gray-400"
-                    }`}
-                  />
-                </button>
+                <h3 className="font-bold text-lg mt-4">{reader.name}</h3>
+                <p className="text-muted-foreground text-sm">{reader.district}</p>
               </div>
             </DialogTrigger>
-            <DialogContent className="text-right">
+
+            <DialogContent className="text-right max-w-md">
               <DialogHeader>
                 <DialogTitle>{reader.name}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-2">
-                <p>
-                  <strong>الحي:</strong> {reader.district}
-                </p>
-                <p>
-                  <strong>المسجد:</strong>{" "}
+              <div className="space-y-3 pt-2">
+                <div>
+                  <span className="font-semibold">الحي: </span>
+                  {reader.district}
+                </div>
+                <div>
+                  <span className="font-semibold">المسجد: </span>
                   <a
                     href={reader.mosque_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-mint underline"
+                    className="text-primary underline hover:no-underline"
                   >
                     افتح الخريطة
                   </a>
-                </p>
-                <p>
-                  <strong>نموذج التلاوة:</strong>{" "}
+                </div>
+                <div>
+                  <span className="font-semibold">نموذج التلاوة: </span>
                   <a
                     href={reader.sample_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-mint underline"
+                    className="text-primary underline hover:no-underline"
                   >
                     استمع هنا
                   </a>
-                </p>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
         ))}
       </div>
 
-      {/* Pagination Controls */}
-      <div className="flex justify-center items-center gap-4 mt-8">
-        <Button
-          variant="outline"
-          disabled={page === 1}
-          onClick={() => setPage((p) => p - 1)}
-        >
-          السابق
-        </Button>
-        <span className="text-sm font-medium">
-          الصفحة {page} من {totalPages}
-        </span>
-        <Button
-          variant="outline"
-          disabled={page === totalPages}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          التالي
-        </Button>
-      </div>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-8">
+          <Button 
+            variant="outline" 
+            onClick={goToPreviousPage} 
+            disabled={currentPage === 1}
+            size="sm"
+          >
+            السابق
+          </Button>
+          <span className="px-4 py-2 bg-muted rounded-md text-sm">
+            الصفحة {currentPage} من {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            onClick={goToNextPage}
+            disabled={currentPage === totalPages}
+            size="sm"
+          >
+            التالي
+          </Button>
+        </div>
+      )}
     </section>
   );
 }
-
-export default ReadersSection;

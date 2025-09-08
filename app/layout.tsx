@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Cairo } from "next/font/google";
 import ClientLayout from "./components/ClientLayout";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "منصه قراء القران الكريم",
@@ -25,6 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" className={cairo.variable}>
+      <Toaster />
       <body className="antialiased font-cairo font-semibold bg-beige/5">
         <ClientLayout>{children}</ClientLayout>
       </body>
