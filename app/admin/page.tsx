@@ -127,7 +127,10 @@ export default function AdminDashboard() {
         totalReciters: totalReciters || 0,
         totalFavorites: totalFavorites || 0,
         recentReciters: recentReciters || 0,
-        mostFavorited: mostFavoritedReciter?.readers?.map(r => r.name).join(", ") || "لا يوجد",
+        mostFavorited: 
+  Array.isArray(mostFavoritedReciter?.readers) && mostFavoritedReciter.readers.length > 0
+    ? mostFavoritedReciter.readers[0].name
+    : "لا يوجد",
 
       });
     } catch (error) {
