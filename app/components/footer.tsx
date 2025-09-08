@@ -60,7 +60,7 @@ function Footer() {
       <div className="border-t border-cream/20 mt-6 py-4 text-center text-sm text-cream/80">
         © {new Date().getFullYear()} {texts.app.title}. All rights reserved.
           <button
-    onClick={() => (window.location.href = "/login")}
+    onClick={() => (window.location.href = "/admin")}
     className="ml-2 text-gray-400 hover:text-gray-600"
   >
     .
