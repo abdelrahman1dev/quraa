@@ -109,7 +109,7 @@ export default function ReadersSection() {
   const toggleFavorite = useCallback(
     async (readerId: number) => {
       if (!userId) {
-        toast?.error?.("يجب تسجيل الدخول") || alert("يجب تسجيل الدخول");
+        toast.error?.("يجب تسجيل الدخول") || alert("يجب تسجيل الدخول");
         return;
       }
 
@@ -139,7 +139,7 @@ export default function ReadersSection() {
         setFavorites(newSet);
       } catch (err) {
         console.error("Error toggling favorite:", err);
-        toast?.error?.("حدث خطأ أثناء تحديث المفضلة") ||
+        toast.error?.("حدث خطأ أثناء تحديث المفضلة") ||
           alert("حدث خطأ أثناء تحديث المفضلة");
       }
     },

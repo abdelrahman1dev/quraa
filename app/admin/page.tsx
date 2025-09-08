@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -113,6 +113,7 @@ export default function AdminDashboard() {
         .gte("created_at", thirtyDaysAgo.toISOString());
 
       const { data: favoritedReciters } = await supabase.from("favorites").select(`reader_id, readers:reader_id(name)`);
+      
 
       const favoriteCounts: Record<string, number> = favoritedReciters?.reduce((acc: Record<string, number>, fav: FavoritedReciter) => {
         acc[fav.reader_id.toString()] = (acc[fav.reader_id.toString()] || 0) + 1;
@@ -139,7 +140,7 @@ export default function AdminDashboard() {
     try {
       const { data, error } = await supabase.from("readers").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      setReciters(data || []);
+      setReciters((data as unknown as Reciter[]) || []);
     } catch (error) {
       console.error("Error fetching reciters:", error);
       toast.error("حدث خطأ في تحميل القراء");

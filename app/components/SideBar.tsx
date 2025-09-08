@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, Home, MessageSquare, FilePlus2, LogOut } from "lucide-react";
+import { Menu, X, Home,  FilePlus2, LogOut } from "lucide-react";
 import { supabase } from "../lib/supabaseClient"; // ✅ make sure you have this client
 
 export default function Sidebar() {
