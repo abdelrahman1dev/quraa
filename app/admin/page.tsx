@@ -154,7 +154,13 @@ export default function AdminDashboard() {
         totalReciters: totalReciters || 0,
         totalFavorites: totalFavorites || 0,
         recentReciters: recentReciters || 0,
-        mostFavorited: mostFavoritedName,
+
+        mostFavorited: 
+  Array.isArray(mostFavoritedReciter?.readers) && mostFavoritedReciter.readers.length > 0
+    ? mostFavoritedReciter.readers[0].name
+    : "لا يوجد",
+
+
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -162,7 +168,6 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  // ==================== FETCH RECITERS ====================
   const fetchReciters = useCallback(async () => {
     setLoading(true);
     try {
