@@ -52,6 +52,7 @@ function RequestsPage() {
 
   // ✅ Add request to reciters
   const handleAddReciter = async (req: Request) => {
+    setLoading(true)
     const { error } = await supabase.from("readers").insert([
       {
         name: req.name,
@@ -68,6 +69,7 @@ function RequestsPage() {
       toast.success("تمت الاضافة بنجاح")
       await handleDeleteRequest(req.id); // remove request after adding
     }
+    setLoading(false)
   };
 
   // ✅ Delete request
@@ -124,12 +126,14 @@ function RequestsPage() {
               <div className="flex gap-3 mt-3">
                 <Button
                   onClick={() => handleAddReciter(req)}
+                  disabled={loading ? true : false}
                   className="bg-mint text-darkgreen hover:bg-darkgreen hover:text-white"
                 >
                   إضافة للقائمة
                 </Button>
                 <Button
                   variant="destructive"
+                  disabled={loading ? true : false}
                   onClick={() => handleDeleteRequest(req.id)}
                 >
                   حذف
