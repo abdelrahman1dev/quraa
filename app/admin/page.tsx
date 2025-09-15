@@ -121,53 +121,59 @@ export default function AdminDashboard() {
         .select("*", { count: "exact", head: true })
         .gte("created_at", thirtyDaysAgo.toISOString());
 
-      // Fetch favorites with reciter info
-      const { data: favoritedReciters } = await supabase
+      // Fetch favorites with reciter info - Fixed query structure
+      const { data: favoritedReciters, error: favoritesError } = await supabase
         .from("favorites")
-        .select(`reader_id, readers:reader_id(name)`);
+        .select(`
+          reader_id,
+          readers!inner (
+            name
+          )
+        `);
 
-      // Build a map: reciter_id => favorite count
-      const favoriteCounts: Record<number, number> = {};
-      favoritedReciters?.forEach((fav: FavoritedReciter) => {
-        const rid = fav.reader_id;
-        favoriteCounts[rid] = (favoriteCounts[rid] || 0) + 1;
-      });
-
-      // Find reciter ID with most favorites
-      let mostFavoritedId: number | null = null;
-      let maxCount = 0;
-      for (const [idStr, count] of Object.entries(favoriteCounts)) {
-        if (count > maxCount) {
-          maxCount = count;
-          mostFavoritedId = Number(idStr);
-        }
+      if (favoritesError) {
+        console.error("Error fetching favorites:", favoritesError);
       }
 
-      // Get the name of the most favorited reciter
-      const mostFavoritedReciter = favoritedReciters?.find(
-        (fav) => fav.reader_id === mostFavoritedId
-      );
-      const mostFavoritedName =
-        mostFavoritedReciter?.readers?.[0]?.name || "لا يوجد";
+      // Build a map: reciter_id => { name, count }
+      const favoriteCounts: Record<number, { name: string; count: number }> = {};
+      
+      if (favoritedReciters && Array.isArray(favoritedReciters)) {
+        favoritedReciters.forEach((fav) => {
+          const rid = fav.reader_id;
+          const name = fav.readers && fav.readers[0]?.name;
+          
+          if (rid && name) {
+            if (!favoriteCounts[rid]) {
+              favoriteCounts[rid] = { name, count: 0 };
+            }
+            favoriteCounts[rid].count += 1;
+          }
+        });
+      }
+
+      // Find reciter with most favorites
+      let mostFavoritedName = "لا يوجد";
+      let maxCount = 0;
+      
+      for (const [idStr, data] of Object.entries(favoriteCounts)) {
+        if (data.count > maxCount) {
+          maxCount = data.count;
+          mostFavoritedName = data.name;
+        }
+      }
 
       setStats({
         totalReciters: totalReciters || 0,
         totalFavorites: totalFavorites || 0,
         recentReciters: recentReciters || 0,
-
-        mostFavorited: 
-  Array.isArray(mostFavoritedReciter?.readers) && mostFavoritedReciter.readers.length > 0
-    ? mostFavoritedReciter.readers[0].name
-    : "لا يوجد",
-
-
+        mostFavorited: mostFavoritedName,
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
       toast.error("حدث خطأ أثناء تحميل الإحصائيات");
     }
   }, []);
-
 
   const fetchReciters = useCallback(async () => {
     setLoading(true);
@@ -302,10 +308,11 @@ export default function AdminDashboard() {
               <ErrorMessage name={field} component="div" className="text-red-500 text-sm mt-1" />
             </div>
           ))}
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4">
             <Button
               type="button"
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={() => {
                 setIsAddDialogOpen(false);
                 setIsEditDialogOpen(false);
@@ -314,7 +321,7 @@ export default function AdminDashboard() {
             >
               إلغاء
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {reciter ? "تحديث" : "إضافة"}
             </Button>
@@ -326,78 +333,80 @@ export default function AdminDashboard() {
 
   // ==================== RENDER ====================
   return (
-    <div className="min-h-screen bg-background p-6" dir="rtl">
+    <div className="min-h-screen bg-background p-3 sm:p-6" dir="rtl">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-right mb-2">لوحة تحكم الإدارة</h1>
-          <p className="text-muted-foreground text-right">إدارة قائمة القراء والإحصائيات</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-right mb-2">لوحة تحكم الإدارة</h1>
+          <p className="text-muted-foreground text-right text-sm sm:text-base">إدارة قائمة القراء والإحصائيات</p>
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-card p-6 rounded-lg border shadow-sm flex items-center justify-between">
-            <Users className="h-8 w-8 text-blue-500" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="bg-gradient-to-br from-amber-50 to-orange-100 p-4 sm:p-6 rounded-lg border border-amber-200 shadow-sm flex items-center justify-between">
+            <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
             <div className="text-right">
-              <p className="text-2xl font-bold">{stats.totalReciters}</p>
-              <p className="text-sm text-muted-foreground">إجمالي القراء</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-800">{stats.totalReciters}</p>
+              <p className="text-xs sm:text-sm text-gray-600">إجمالي القراء</p>
             </div>
           </div>
-          <div className="bg-card p-6 rounded-lg border shadow-sm flex items-center justify-between">
-            <Heart className="h-8 w-8 text-red-500" />
+          <div className="bg-gradient-to-br from-amber-50 to-orange-100 p-4 sm:p-6 rounded-lg border border-amber-200 shadow-sm flex items-center justify-between">
+            <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-red-500" />
             <div className="text-right">
-              <p className="text-2xl font-bold">{stats.totalFavorites}</p>
-              <p className="text-sm text-muted-foreground">إجمالي المفضلات</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-800">{stats.totalFavorites}</p>
+              <p className="text-xs sm:text-sm text-gray-600">إجمالي المفضلات</p>
             </div>
           </div>
-          <div className="bg-card p-6 rounded-lg border shadow-sm flex items-center justify-between">
-            <Music className="h-8 w-8 text-green-500" />
+          <div className="bg-gradient-to-br from-amber-50 to-orange-100 p-4 sm:p-6 rounded-lg border border-amber-200 shadow-sm flex items-center justify-between">
+            <Music className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
             <div className="text-right">
-              <p className="text-2xl font-bold">{stats.recentReciters}</p>
-              <p className="text-sm text-muted-foreground">قراء جدد هذا الشهر</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-800">{stats.recentReciters}</p>
+              <p className="text-xs sm:text-sm text-gray-600">قراء جدد هذا الشهر</p>
             </div>
           </div>
-          <div className="bg-card p-6 rounded-lg border shadow-sm flex items-center justify-between">
-            <BarChart3 className="h-8 w-8 text-purple-500" />
-            <div className="text-right">
-              <p className="text-lg font-bold truncate">{stats.mostFavorited}</p>
-              <p className="text-sm text-muted-foreground">الأكثر إعجاباً</p>
+          <div className="bg-gradient-to-br from-amber-50 to-orange-100 p-4 sm:p-6 rounded-lg border border-amber-200 shadow-sm flex items-center justify-between">
+            <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-purple-500" />
+            <div className="text-right min-w-0">
+              <p className="text-sm sm:text-lg font-bold truncate text-gray-800" title={stats.mostFavorited}>
+                {stats.mostFavorited}
+              </p>
+              <p className="text-xs sm:text-sm text-gray-600">الأكثر إعجاباً</p>
             </div>
           </div>
         </div>
 
         {/* Actions and Search */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 mb-6">
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus className="ml-2 h-4 w-4" />
                 إضافة قارئ جديد
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="w-[95vw] max-w-md mx-auto">
               <DialogHeader>
-                <DialogTitle>إضافة قارئ جديد</DialogTitle>
+                <DialogTitle className="text-right">إضافة قارئ جديد</DialogTitle>
               </DialogHeader>
               <ReciterForm onSubmit={handleAddReciter} />
             </DialogContent>
           </Dialog>
 
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="البحث في القراء..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
+              className="pl-10 w-full sm:w-64"
             />
           </div>
         </div>
 
         {/* Reciters Table */}
-        <div className="bg-card rounded-lg border shadow-sm">
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4 text-right">قائمة القراء</h2>
+        <div className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-lg border border-amber-200 shadow-sm">
+          <div className="p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 text-right text-gray-800">قائمة القراء</h2>
             {loading ? (
               <div className="flex justify-center items-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin" />
@@ -408,8 +417,8 @@ export default function AdminDashboard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-right">الاسم</TableHead>
-                      <TableHead className="text-right">الحي</TableHead>
-                      <TableHead className="text-right">تاريخ الإضافة</TableHead>
+                      <TableHead className="text-right hidden sm:table-cell">الحي</TableHead>
+                      <TableHead className="text-right hidden md:table-cell">تاريخ الإضافة</TableHead>
                       <TableHead className="text-right">الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -423,27 +432,38 @@ export default function AdminDashboard() {
                     ) : (
                       filteredReciters.map((reciter) => (
                         <TableRow key={reciter.id}>
-                          <TableCell className="font-medium">{reciter.name}</TableCell>
-                          <TableCell>{reciter.district}</TableCell>
-                          <TableCell>{new Date(reciter.created_at).toLocaleDateString("ar-SA")}</TableCell>
+                          <TableCell className="font-medium">
+                            <div>
+                              <div>{reciter.name}</div>
+                              <div className="text-sm text-muted-foreground sm:hidden">
+                                {reciter.district}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">{reciter.district}</TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            {new Date(reciter.created_at).toLocaleDateString("ar-SA")}
+                          </TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
+                            <div className="flex gap-1 sm:gap-2">
                               <Button
                                 size="sm"
                                 variant="outline"
+                                className="h-8 w-8 p-0"
                                 onClick={() => {
                                   setEditingReciter(reciter);
                                   setIsEditDialogOpen(true);
                                 }}
                               >
-                                <Edit className="h-4 w-4" />
+                                <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                               </Button>
                               <Button
                                 size="sm"
                                 variant="destructive"
+                                className="h-8 w-8 p-0"
                                 onClick={() => handleDeleteReciter(reciter.id)}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -459,9 +479,9 @@ export default function AdminDashboard() {
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="w-[95vw] max-w-md mx-auto">
             <DialogHeader>
-              <DialogTitle>تحديث بيانات القارئ</DialogTitle>
+              <DialogTitle className="text-right">تحديث بيانات القارئ</DialogTitle>
             </DialogHeader>
             {editingReciter && <ReciterForm reciter={editingReciter} onSubmit={handleUpdateReciter} />}
           </DialogContent>
