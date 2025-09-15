@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type Request = {
   id: string;
@@ -64,7 +65,7 @@ function RequestsPage() {
     if (error) {
       alert("خطأ في الإضافة: " + error.message);
     } else {
-      alert("تمت إضافة القارئ بنجاح ✅");
+      toast.success("تمت الاضافة بنجاح")
       await handleDeleteRequest(req.id); // remove request after adding
     }
   };
