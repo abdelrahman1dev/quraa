@@ -18,8 +18,8 @@ export default function Sidebar() {
   };
 
   const navItems = [
-    { name: "Dashboard", href: "/admin", icon: Home },
-    { name: "Requests", href: "/admin/requests", icon: FilePlus2 },
+    { name: "الصفحه الرءيسية", href: "/admin", icon: Home },
+    { name: "طلبات الاضافة", href: "/admin/requests", icon: FilePlus2 },
   ];
 
   const handleLogout = async () => {
@@ -43,7 +43,7 @@ export default function Sidebar() {
         transition-transform duration-300 ease-in-out z-40 
         ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
-        <h2 className="text-2xl font-bold text-darkgreen mb-6">Admin Panel</h2>
+   
         <nav className="flex flex-col gap-4">
           {navItems.map((item) => (
             <Link
@@ -63,7 +63,7 @@ export default function Sidebar() {
             className="flex items-center gap-3 px-4 py-2 rounded-lg font-semibold text-red-600 hover:bg-red-100 mt-6"
           >
             <LogOut size={20} />
-            <span>Logout</span>
+            <span>تسجيل الخروج</span>
           </button>
         </nav>
       </aside>
