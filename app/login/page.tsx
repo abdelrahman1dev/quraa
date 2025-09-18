@@ -185,11 +185,12 @@ export default function AuthPage() {
           {mode === "login" ? "دخول" : "تسجيل"}
         </button>
 
-        <GoogleButton
-          onClick={handleGoogleAuth}
-          className="w-full justify-center"
-          label={mode === "login" ? "الدخول عبر جوجل" : "سجل عبر جوجل"}
-        />
+ <GoogleButton
+  onClick={handleGoogleAuth}
+  className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium py-2 shadow-sm transition hover:bg-gray-50 hover:shadow-md active:scale-[0.98]"
+  label={mode === "login" ? "الدخول عبر جوجل" : "سجل عبر جوجل"}
+/>
+
 
         <p className="mt-4 text-sm">
           {mode === "login" ? "ليس لديك حساب؟" : "لديك حساب؟"}{" "}
