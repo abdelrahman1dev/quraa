@@ -26,11 +26,10 @@ function HeroSec() {
       <div className="flex-1 relative flex justify-center lg:justify-end">
         <div className="w-64 h-64 lg:w-96 lg:h-96 rounded-full bg-mint/20 flex items-center justify-center shadow-lg relative">
           <DotLottieReact src="/animations/Quran.json" loop autoplay />
-          <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-beige rounded-full border-4 border-gold shadow-md" />
-        </div>
+       
       </div>
       <div className="w-32  absolute bottom-0 left-1/2 transform -translate-x-1/2 lg:right-20 lg:translate-x-0">
-        <DotLottieReact src="/animations/scrolldown.json" loop autoplay />
+        <DotLottieReact src="/animations/Scrolldown.json" loop autoplay />
 
       </div>
     </section>
